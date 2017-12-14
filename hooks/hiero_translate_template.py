@@ -8,6 +8,16 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights 
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
+"""
+@updated_by Dashiel Bivens
+@date 11/16/2016
+@notes
+  - Tested against tk-hiero-export v0.4.3
+  - Changes from default marked with "#  CBSD Customization
+                                      # ==========================="
+"""
+
+
 import ast
 
 from tank import Hook
@@ -39,6 +49,16 @@ class HieroTranslateTemplate(Hook):
             "{name}": "{clip}",
             "{version}": "{tk_version}",
         }
+
+        #  CBSD Customization
+        # ===========================
+        mapping.update({
+            '{CustomEntity01}': '{CbsdSeason}',
+            '{sg_sequence}': '{CbsdEpisode}',
+            '{hiero_auto_version}': '{CbsdAutoVersion}',
+            '{hiero_version_base_name}': '{CbsdVersionBaseName}',
+        })
+        # ===========================
 
         # see if we have a value to use for Step
         try:

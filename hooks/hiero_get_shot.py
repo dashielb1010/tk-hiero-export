@@ -88,6 +88,7 @@ class HieroGetShot(Hook):
 
         # parent not found in cache, grab it from Shotgun
         sg = self.parent.shotgun
+
         filter = [
             ["project", "is", self.parent.context.project],
             ["code", "is", hiero_sequence.name()],
@@ -95,6 +96,20 @@ class HieroGetShot(Hook):
 
         # the entity type of the parent.
         par_entity_type = "Sequence"
+
+        #  CBSD Customization
+        # ==============================
+        try:
+            assert self.parent.context.entity and self.parent.context.entity['type'] == par_entity_type
+        except AssertionError:
+            raise Exception("CBSD Error: Hiero was not Launched against the correct entity type: '%s'. "
+                            "Exporting to Shotgun is disabled!"
+                            % par_entity_type
+                            )
+        filter = [
+            ['id', 'is', self.parent.context.entity['id']]
+        ]
+        # ==============================
 
         parents = sg.find(par_entity_type, filter)
         if len(parents) > 1:
