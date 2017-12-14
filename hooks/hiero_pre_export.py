@@ -22,4 +22,15 @@ class HieroPreExport(Hook):
         :param processor: Processor The is being used, in case distinguishing between
                           differnt exports is needed.
         """
-        pass
+
+        #  CBSD Customization
+        # ===========================
+        self.parent.execute_hook_method("hook_resolve_custom_strings", "cbsd_clear_lookup_cache")
+
+        # todo: For the custom CBSD Hiero Exporter, we are going to rely on a custom plugin to populate the GUI (cont.)...
+        # with our additional options. We will use this script to evaluate if that has happened successfully, since
+        # we cannot actually make those modifications from within any of the available hooks-- but they will be
+        # integral to the way the hooks end up impacting the app behavior.
+
+        # todo: if customizations are validated, patch the exporter, otherwise, show a warning dialog with the option to cancel
+        # ===========================
