@@ -10,6 +10,12 @@
 
 from tank import Hook
 
+#  CBSD Customization
+# ===========================
+from pprint import pprint
+from TagElements.constants import PLATE_TYPE, REF_TYPE, ELEMENT_TYPE_NAMES
+# ===========================
+
 
 class HieroResolveCustomStrings(Hook):
     """Translates a keyword string into its resolved value for a given task."""
@@ -24,7 +30,7 @@ class HieroResolveCustomStrings(Hook):
         # generating the preview in the GUI*. Let's make sure when we do an export, that all versions
         # are gotten again, just in case we're exporting the same shots' plates for a second time during a session.
         # Call this method during Pre-Export.
-        self._sg_lookup_cache = {}
+        self.__class__._sg_lookup_cache = {}
 
     def getCbsdElementTag(self, item):
 
@@ -33,42 +39,74 @@ class HieroResolveCustomStrings(Hook):
             if tag.metadata().hasKey(CBSD_TAG_SIGNATURE):
                 return tag
 
+    def getElementTagMetadataValue(self, item, metadata_key):
+        element_tag = self.getCbsdElementTag(item)
+        if element_tag and element_tag.metadata().hasKey(metadata_key):
+            metadata_value = element_tag.metadata().value(metadata_key)
+            return metadata_value
+        else:
+            return ''
+
     def getAutoVersion(self, task):
 
         version_base_name = self.getVersionBaseName(task)
+        version_type = self.getVersionType(task)
+        file_type = task._preset.properties().get('file_type')
 
-        if version_base_name not in self._sg_lookup_cache:
-            shot = self.parent.execute_hook("hook_get_shot", task=task, item=task._item, data=self.parent.preprocess_data)
+        if version_base_name not in self.__class__._sg_lookup_cache:
+            self.__class__._sg_lookup_cache[version_base_name] = {}
+
+        if version_type not in self.__class__._sg_lookup_cache[version_base_name]:
+            self.__class__._sg_lookup_cache[version_base_name][version_type] = {}
+
+        if file_type not in self._sg_lookup_cache[version_base_name][version_type]:
+            shot = self.parent.execute_hook("hook_get_shot",
+                                            task=task,
+                                            item=task._item,
+                                            data=self.parent.preprocess_data,
+                                            upload_thumbnail=False
+                                            )
             filters = [
                 ['project', 'is', self.parent.context.project],
                 ['entity', 'is', shot],
-                ['code', 'contains', version_base_name]
+                ['code', 'contains', version_base_name],
+                ['sg_version_type', 'is', version_type],
+                ['sg_file_type', 'is', file_type],
             ]
             fields = [
                 'sg_version_number',
             ]
             previous_versions = self.parent.shotgun.find("Version", filters, fields)
-            self._sg_lookup_cache[version_base_name] = previous_versions
+            self.__class__._sg_lookup_cache[version_base_name][version_type][file_type] = previous_versions
 
-        previous_versions = self._sg_lookup_cache[version_base_name]
+        previous_versions = self.__class__._sg_lookup_cache[version_base_name][version_type][file_type]
+        highest_available_number = 0
 
-        highest_available_number = 1
         for version in previous_versions:
             num = version['sg_version_number']
             if num > highest_available_number:
-                highest_available_number = num + 1
-
+                highest_available_number = num
+        highest_available_number += 1
         return '%s' % format(highest_available_number, "03")
 
     def getVersionBaseName(self, task):
+        return self.getElementTagMetadataValue(task._item, 'tag.version_base_name')
 
-        item = task._item
-        element_tag = self.getCbsdElementTag(item)
-        if element_tag and element_tag.metadata().hasKey('tag.version_base_name'):
-            version_base_name = element_tag.metadata().value('tag.version_base_name')
-            return version_base_name
-        else:
-            return ''
+    def getVersionType(self, task):
+        element_type = self.getElementTagMetadataValue(task._item, 'tag.element_type')
+
+        file_type = task._preset.properties().get('file_type')
+
+        version_type = ''
+        if element_type == ELEMENT_TYPE_NAMES[PLATE_TYPE]:
+            if file_type in ('dpx', 'exr'):
+                version_type = 'Plate'
+            if file_type in ('jpeg', ):
+                version_type = 'Proxy'
+        elif element_type == ELEMENT_TYPE_NAMES[REF_TYPE]:
+            version_type = 'Reference'
+
+        return version_type
 
     # ===========================
 
@@ -93,14 +131,20 @@ class HieroResolveCustomStrings(Hook):
 
         keyword_custom_logic = (
             "{CbsdAutoVersion}",
-            "{CbsdVersionBaseName}"
+            "{CbsdVersionBaseName}",
+            "{CbsdVersionType}",
         )
 
         if keyword in keyword_custom_logic:
             if keyword == keyword_custom_logic[0]:
                 return self.getAutoVersion(task)
+
             elif keyword == keyword_custom_logic[1]:
                 return self.getVersionBaseName(task)
+
+            elif keyword == keyword_custom_logic[2]:
+                return self.getVersionType(task)
+
         # ===========================
 
         shot_code = task._item.name()
