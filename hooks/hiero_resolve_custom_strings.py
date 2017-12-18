@@ -26,10 +26,12 @@ class HieroResolveCustomStrings(Hook):
     # ===========================
 
     def cbsd_clear_lookup_cache(self):
-        # the methods that query shotgun will only happen once, but those methods get executed *even for
-        # generating the preview in the GUI*. Let's make sure when we do an export, that all versions
-        # are gotten again, just in case we're exporting the same shots' plates for a second time during a session.
-        # Call this method during Pre-Export.
+        # The cache on the class is useful because any given instance of the processor when using the hook will use
+        # the methods that query shotgun only once per entity and type etc. Note that because the processor is instanced
+        # every time the export template is edited we need to make sure that this cache is on the __class__ and not only
+        # the instance. This method is to make sure when we do an export, that all versions are gotten again,
+        # just in case we're exporting the same shots' plates for a second time during a session. We call this method
+        # during Pre-Export, (but when we know we're actually exporting not just editing the Export Template).
         self.__class__._sg_lookup_cache = {}
 
     def getCbsdElementTag(self, item):

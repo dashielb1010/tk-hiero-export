@@ -43,10 +43,10 @@ class HieroPreExport(Hook):
                 # the suppression mode flag is due to Hiero's behaviour when editing the Export Template
                 # in the GUI dialog. The suppression mode attribute is reset to false every time the Hiero
                 # context is changed, but providing the flag means that the Tag Elements Action
-                # will only execute once in the current context. This is beneficial in the Export Dialog because
+                # will only execute once in the current GUI Context. This is beneficial in the Export Dialog because
                 # the processor is re-instantiated every time the Export Template is edited (in any way whatsoever)
                 # Since when we are editing the Export Template, it does us no good to have the tool chugging away on
-                # every click-- leading to an increased lagging sensation....
+                # every click which leads to an irritating lagging sensation....
                 action.execute(enter_suppression_mode=True)
                 break
 
@@ -62,5 +62,8 @@ class HieroPreExport(Hook):
             self.__class__._SUPPRESS_CLEAR_CACHE = True
         # ===========================
 
+    #  CBSD Customization
+    # ===========================
     def resetSuppressClearCache(self, event):
         self.__class__._SUPPRESS_CLEAR_CACHE = False
+    # ===========================
