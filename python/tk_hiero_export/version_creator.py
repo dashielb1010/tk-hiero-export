@@ -30,6 +30,15 @@ from sgtk.platform.qt import QtGui, QtCore
 from .base import ShotgunHieroObjectBase
 from .collating_exporter import CollatingExporter, CollatedShotPreset
 
+#  CBSD Customization
+# ==============================
+
+import os
+import uuid
+DEADLINE_TEMP_DIR = os.path.normpath('//skynet/data/Tools/SOFTWARE/DeadlineRepository9/temp/hiero_version_yml')
+
+# ==============================
+
 
 class ShotgunTranscodeExporterUI(ShotgunHieroObjectBase, FnTranscodeExporterUI.TranscodeExporterUI):
     """
@@ -105,6 +114,33 @@ class ShotgunTranscodeExporter(ShotgunHieroObjectBase, FnTranscodeExporter.Trans
     """
     def __init__(self, initDict):
         """ Constructor """
+
+        #  CBSD Customization
+        # ==============================
+        """
+        Issue: When exporting from Hiero and rendering with Deadline, the quicktime
+        that is generated is not being uploaded to Shotgun.
+
+        The way the `ShotgunTranscodeExporter` code is structured, the
+        `DeadlineRenderSubmission` (in `SubmitHieroToDeadline.py`) class is instantiated
+        and launches the Deadline renders before the `ShotgunTranscodeExporter.startTask`
+        is called. The solution is to create a tempfile that is written to the
+        Deadline job file and is updated by Shotgun with the Version ID that is created.
+        When the Deadline job finishes it uploads the quicktime to the Shotgun
+        Version stored in the tempfile. Upon success, the tempfile is deleted.
+
+        I couldn't see any easy way of passing this info through code, not that
+        there isn't a way.
+
+        This method should work with both local rendering and with Deadline rendering,
+        if not using DeadlineSubmitter then the temp file is never generated.
+        """
+
+        self.shotgunVersionTempFile = os.path.join(DEADLINE_TEMP_DIR, '%s.yml' % str(uuid.uuid4()))
+        initDict['ShotgunVersionTempFile'] = self.shotgunVersionTempFile
+
+        # ==============================
+
         FnTranscodeExporter.TranscodeExporter.__init__(self, initDict)
         CollatingExporter.__init__(self)
         self._resolved_export_path = None
@@ -396,6 +432,10 @@ class ShotgunTranscodeExporter(ShotgunHieroObjectBase, FnTranscodeExporter.Trans
             self.app.execute_hook(
                 "hook_post_version_creation",
                 version_data=vers,
+                #  CBSD Customization
+                # ==============================
+                task=self,
+                # ==============================
             )
 
         # Update the cut item if possible
