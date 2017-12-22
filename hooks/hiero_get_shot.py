@@ -10,11 +10,23 @@
 
 from tank import Hook
 
+#  CBSD Customization
+# ==============================
+import re
+import traceback
+from messaging import showError
+# ==============================
 
 class HieroGetShot(Hook):
     """
     Return a Shotgun Shot dictionary for the given Hiero items
     """
+
+    #  CBSD Customization
+    # ==============================
+    _cbsd_shot_convention_template = 'hiero_shot_convention'
+    _cbsd_shot_convention_re = None
+    # ==============================
 
     def execute(self, task, item, data, **kwargs):
         """
@@ -44,10 +56,21 @@ class HieroGetShot(Hook):
             raise StandardError("Multiple shots named '%s' found", item.name())
         if len(shots) == 0:
             # create shot in shotgun
+
+            #  CBSD Customization
+            # ==============================
+            scene_code = self.get_scene_code(item.name())
+            scene = self.get_scene(scene_code)
+            # ==============================
+
             shot_data = {
                 "code": item.name(),
                 parent_field: parent,
                 "project": self.parent.context.project,
+                #  CBSD Customization
+                # ==============================
+                'sg_scene': scene,
+                # ==============================
             }
             shot = sg.create("Shot", shot_data, return_fields=fields)
             self.parent.log_info("Created Shot in Shotgun: %s" % shot_data)
@@ -102,10 +125,11 @@ class HieroGetShot(Hook):
         try:
             assert self.parent.context.entity and self.parent.context.entity['type'] == par_entity_type
         except AssertionError:
-            raise Exception("CBSD Error: Hiero was not Launched against the correct entity type: '%s'. "
-                            "Exporting to Shotgun is disabled!"
-                            % par_entity_type
-                            )
+            message = "CBSD Error: Hiero was not Launched against the correct entity type: '%s'. Exporting to " \
+                      "Shotgun is disabled!" % par_entity_type
+            showError(message)
+            raise Exception(message)
+
         filter = [
             ['id', 'is', self.parent.context.entity['id']]
         ]
@@ -145,3 +169,65 @@ class HieroGetShot(Hook):
         data["parent_cache"][hiero_sequence.guid()] = parent
 
         return parent
+
+    #  CBSD Customization
+    # ==============================
+    def get_scene_code(self, shot_code):
+        """
+        Parse the a shot code for the middle scene digits in the SHOT_CONVENTION
+
+        @param shot_code - \b str - the shot code
+        @return scene_code - \b str - the portion of the shot code corresponding to its scene
+        """
+        if not self.__class__._cbsd_shot_convention_re:
+            try:
+                shot_convention_template = self.parent.engine.sgtk.templates[self._cbsd_shot_convention_template]
+                fields = self.parent.context.as_template_fields(shot_convention_template)
+                convention_pattern = shot_convention_template.apply_fields(fields)
+            except KeyError:
+                self.parent.logger.error("The template '%s' was not found in the Toolkit Configuration. "
+                                         "It is required in order for Scene codes to resolve appropriately. "
+                                         "Its definition must return a valid regular expression pattern, with a "
+                                         "'scene' capture group.")
+                raise
+            try:
+                self.__class__._cbsd_shot_convention_re = re.compile(convention_pattern)
+            except:
+                self.logger.error("CBSD ERROR: The '%s' template definition is not a valid re pattern."
+                                  % self._cbsd_shot_convention_template)
+                raise
+
+        else:
+            scene_code = ''
+            match = self.__class__._cbsd_shot_convention_re.match(shot_code)
+
+            if not match:
+                self.parent.logger.warning(
+                    "The Shot code, '%s' was not matched to the resolved shot convention: %s"
+                    % (shot_code, self.__class__._cbsd_shot_convention_re.pattern))
+            else:
+                scene_code = match.groupdict().get('scene')
+            return scene_code
+
+    def get_scene(self, scene_code):
+        """
+        Query shotgun for the scene with the corresponding code, and create one if necessary.
+
+        @param scene_code - \b str - the scene code
+        @param shotgun - a Shotgun API instance
+        @return \b scene_entity - \b dict - the Shotgun Scene entity matching the scene code.
+        """
+        if not scene_code:
+            return
+        self.parent.logger.info("    Checking Shotgun for Existing Scene, '%s'..." % scene_code)
+        scene_entities = self.parent.shotgun.find("Scene", [
+            ['project', 'is', self.parent.context.project],
+            ['code', 'is', scene_code]], ['code'])
+
+        if not scene_entities:
+            scene_entity = self.parent.shotgun.create("Scene", {'code': scene_code, 'project': self.parent.context.project})
+        else:
+            scene_entity = scene_entities[0]
+        return scene_entity
+    # ==============================
+

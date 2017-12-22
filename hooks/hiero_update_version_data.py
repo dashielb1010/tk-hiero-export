@@ -48,6 +48,9 @@ class HieroUpdateVersionData(Hook):
             'sg_version_type': sg_version_type,
             'sg_file_type': file_type,
             'sg_colorspace': colorspace,
+            'sg_task': self.parent.context.task,
+            # 'sg_width': ,
+            # 'sg_height': ,
         })
 
         # ===========================

@@ -21,5 +21,9 @@ class HieroGetExtraPublishData(Hook):
 
         The track item associated with this task can be accessed via task._item.
         """
-        # No extra data by default
-        return None
+        published_file_data = {
+            'task': self.parent.context.task,
+        }
+        return published_file_data
+
+
