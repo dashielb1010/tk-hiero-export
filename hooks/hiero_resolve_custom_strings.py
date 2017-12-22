@@ -24,9 +24,13 @@ class HieroResolveCustomStrings(Hook):
 
     #  CBSD Customization
     # ===========================
+    # values for the Version.sg_version_type_field
+    sg_plate_type = 'Plate'
+    sg_proxy_type = 'Proxy'
+    sg_reference_type = 'Reference'
 
     def cbsd_clear_lookup_cache(self):
-        # The cache on the class is useful because any given instance of the processor when using the hook will use
+        # Any given instance of the processor when using the hook will use
         # the methods that query shotgun only once per entity and type etc. Note that because the processor is instanced
         # every time the export template is edited we need to make sure that this cache is on the __class__ and not only
         # the instance. This method is to make sure when we do an export, that all versions are gotten again,
@@ -102,11 +106,11 @@ class HieroResolveCustomStrings(Hook):
         version_type = ''
         if element_type == ELEMENT_TYPE_NAMES[PLATE_TYPE]:
             if file_type in ('dpx', 'exr'):
-                version_type = 'Plate'
+                version_type = self.sg_plate_type
             if file_type in ('jpeg', ):
-                version_type = 'Proxy'
+                version_type = self.sg_proxy_type
         elif element_type == ELEMENT_TYPE_NAMES[REF_TYPE]:
-            version_type = 'Reference'
+            version_type = self.sg_reference_type
 
         return version_type
 
@@ -135,6 +139,7 @@ class HieroResolveCustomStrings(Hook):
             "{CbsdAutoVersion}",
             "{CbsdVersionBaseName}",
             "{CbsdVersionType}",
+            "{CbsdTask}",
         )
 
         if keyword in keyword_custom_logic:

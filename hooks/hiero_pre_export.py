@@ -40,13 +40,14 @@ class HieroPreExport(Hook):
         # Run the TagElements tool before export to ensure that all metadata is current.
         for action in hiero.ui.registeredActions():
             if isinstance(action, TagElementsAction):
-                # the suppression mode flag is due to Hiero's behaviour when editing the Export Template
-                # in the GUI dialog. The suppression mode attribute is reset to false every time the Hiero
-                # context is changed, but providing the flag means that the Tag Elements Action
-                # will only execute once in the current GUI Context. This is beneficial in the Export Dialog because
-                # the processor is re-instantiated every time the Export Template is edited (in any way whatsoever)
-                # Since when we are editing the Export Template, it does us no good to have the tool chugging away on
-                # every click which leads to an irritating lagging sensation....
+                # The suppression mode flag is needed due to Hiero's behavior when editing the Export Template
+                # in the GUI dialog. Providing the flag means that the Tag Elements Action will only execute once in
+                # the current GUI Context. This is beneficial in the Export Dialog because in Nuke 10.5+,
+                # due to the 'preview' feature, the processor is re-instantiated every time the Export
+                # Template is edited (in any way whatsoever). Since when we are editing the Export Template,
+                # it does us no good to have the tool chugging away on every click which leads to an
+                # irritating lagging sensation, 'suppression mode' will make it run only once,
+                # until we change contexts (cancel or initiate the export)
                 action.execute(enter_suppression_mode=True)
                 break
 
