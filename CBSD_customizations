@@ -1,0 +1,31 @@
+# Todos
+
+1. Transfer 'client_shot_name' to shot from tag
+
+2. Get Pipeline Metadata / Client Spec Data
+
+    Shot Entity  - Pending Response from Shotgun Software -
+    a. DstIn (Ref)
+    b. DstOut (Ref)
+    c. SrcIn (Hero Plate)
+    d. SrcOut (Hero Plate)
+    e. Width (Final Client Spec)
+    f. Height (Final Client Spec)
+    g. PixelAspectRatio (Final Client Spec)
+
+    Version Entity
+    a. Frame Count
+    b. Frame Rate
+    c. Height
+    d. Movie Aspect Ratio
+    e. Path to Frames / Movie
+    f. Task
+    g. Width
+
+    PublishedFile Entity
+    a. Version Number
+
+
+3. If possible, get the DEADLINE TEMP FILE attribute set w/o forking the version_creator module
+
+4.

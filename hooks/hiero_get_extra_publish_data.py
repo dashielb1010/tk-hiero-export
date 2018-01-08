@@ -21,9 +21,15 @@ class HieroGetExtraPublishData(Hook):
 
         The track item associated with this task can be accessed via task._item.
         """
+
+        #  CBSD Customization
+        # ==============================
+        sg_version_number = int(
+            self.parent.execute_hook_method("hook_resolve_custom_strings", "getAutoVersion", task=task)
+        )
         published_file_data = {
             'task': self.parent.context.task,
+            'version_number': sg_version_number,
         }
         return published_file_data
-
-
+        # ==============================
