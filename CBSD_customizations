@@ -14,18 +14,13 @@
     g. PixelAspectRatio (Final Client Spec)
 
     Version Entity
-    a. Frame Count
+   ✔a. Frame Count
     b. Frame Rate
     c. Height
     d. Movie Aspect Ratio
     e. Path to Frames / Movie
-    f. Task
+   ✔f. Task
     g. Width
 
     PublishedFile Entity
-    a. Version Number
-
-
-3. If possible, get the DEADLINE TEMP FILE attribute set w/o forking the version_creator module
-
-4.
+   ✔a. Version Number

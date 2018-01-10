@@ -50,6 +50,8 @@ class HieroPostVersionCreation(HookBaseClass):
 
         self.createShotgunVersionTempFile(version_data, kwargs.get("task"))
 
+        # Todo, this is broken because we gave up our item in the finish task base implementation! grrr...
+
         # Upload thumbnail to Version
         task = kwargs.get("task")
         if task:

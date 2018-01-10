@@ -193,7 +193,7 @@ class HieroGetShot(Hook):
             try:
                 self.__class__._cbsd_shot_convention_re = re.compile(convention_pattern)
             except:
-                self.logger.error("CBSD ERROR: The '%s' template definition is not a valid re pattern."
+                self.parent.logger.error("CBSD ERROR: The '%s' template definition is not a valid re pattern."
                                   % self._cbsd_shot_convention_template)
                 raise
 
@@ -219,15 +219,17 @@ class HieroGetShot(Hook):
         """
         if not scene_code:
             return
-        self.parent.logger.info("    Checking Shotgun for Existing Scene, '%s'..." % scene_code)
+        self.parent.logger.debug("Checking Shotgun for Existing Scene, '%s'..." % scene_code)
         scene_entities = self.parent.shotgun.find("Scene", [
             ['project', 'is', self.parent.context.project],
             ['code', 'is', scene_code]], ['code'])
 
         if not scene_entities:
             scene_entity = self.parent.shotgun.create("Scene", {'code': scene_code, 'project': self.parent.context.project})
+            self.parent.logger.debug("Scene not found. Created: %s" % scene_entity)
         else:
             scene_entity = scene_entities[0]
+            self.parent.logger.debug("Scene found: %s" % scene_entity)
         return scene_entity
     # ==============================
 
