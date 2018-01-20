@@ -50,19 +50,18 @@ class HieroPostVersionCreation(HookBaseClass):
 
         self.createShotgunVersionTempFile(version_data, kwargs.get("task"))
 
-        # Todo, this is broken because we gave up our item in the finish task base implementation! grrr...
-
         # Upload thumbnail to Version
         task = kwargs.get("task")
         if task:
-            item = task._item
+            item = task._preserved_item
             source = item.source()
             self.parent.execute_hook("hook_upload_thumbnail",
                                      entity=version_data,
                                      source=source,
                                      item=item,
                                      )
-
+        # clean up the item we preserved, same as what happens too soon with ``task._item``
+        del task._preserved_item
         # ==============================
 
     #  CBSD Customization

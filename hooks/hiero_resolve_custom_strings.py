@@ -12,7 +12,6 @@ from tank import Hook
 
 #  CBSD Customization
 # ===========================
-from pprint import pprint
 from TagElements.constants import PLATE_TYPE, REF_TYPE, ELEMENT_TYPE_NAMES
 # ===========================
 
@@ -24,10 +23,6 @@ class HieroResolveCustomStrings(Hook):
 
     #  CBSD Customization
     # ===========================
-    # values for the Version.sg_version_type_field
-    sg_plate_type = 'Plate'
-    sg_proxy_type = 'Proxy'
-    sg_reference_type = 'Reference'
 
     def cbsd_clear_lookup_cache(self):
         # Any given instance of the processor when using the hook will use
@@ -54,7 +49,7 @@ class HieroResolveCustomStrings(Hook):
             return ''
 
     def getAutoVersion(self, task):
-
+        """Get a formatted Version Number string based on existing versions in Shotgun."""
         version_base_name = self.getVersionBaseName(task)
         version_type = self.getVersionType(task)
         file_type = task._preset.properties().get('file_type')
@@ -90,7 +85,7 @@ class HieroResolveCustomStrings(Hook):
 
         for version in previous_versions:
             num = version['sg_version_number']
-            if num > highest_available_number:
+            if num > highest_available_number and num is not None:
                 highest_available_number = num
         highest_available_number += 1
         return '%s' % format(highest_available_number, "03")
@@ -99,20 +94,38 @@ class HieroResolveCustomStrings(Hook):
         return self.getElementTagMetadataValue(task._item, 'tag.version_base_name')
 
     def getVersionType(self, task):
+        """
+        Gets the 'sg_version_type' value based on some narrow observations about filetypes.
+
+        Ultimately, this is a kloogy way of determining these values, but they are just metadata...
+         The paths themselves are determined by the export structure, so at least their true meaning
+         in the pipeline is still in control of the user.
+        :param task:
+        :return:
+        """
+        # values for the Version.sg_version_type_field
+        sg_plate_type = 'Plate'
+        sg_proxy_type = 'Proxy'
+        sg_reference_type = 'Reference'
+
         element_type = self.getElementTagMetadataValue(task._item, 'tag.element_type')
 
         file_type = task._preset.properties().get('file_type')
 
         version_type = ''
         if element_type == ELEMENT_TYPE_NAMES[PLATE_TYPE]:
-            if file_type in ('dpx', 'exr'):
-                version_type = self.sg_plate_type
+            if file_type in ('dpx', 'exr', 'mov'):
+                version_type = sg_plate_type
             if file_type in ('jpeg', ):
-                version_type = self.sg_proxy_type
+                version_type = sg_proxy_type
         elif element_type == ELEMENT_TYPE_NAMES[REF_TYPE]:
-            version_type = self.sg_reference_type
+            version_type = sg_reference_type
 
         return version_type
+
+    def getCurrentSgTask(self):
+        # todo return 'conf' or 'rev' or whatever
+        print 'Wahhooooo'
 
     # ===========================
 
@@ -143,14 +156,17 @@ class HieroResolveCustomStrings(Hook):
         )
 
         if keyword in keyword_custom_logic:
-            if keyword == keyword_custom_logic[0]:
+            if keyword == '{CbsdAutoVersion}':
                 return self.getAutoVersion(task)
 
-            elif keyword == keyword_custom_logic[1]:
+            elif keyword == "{CbsdVersionBaseName}":
                 return self.getVersionBaseName(task)
 
-            elif keyword == keyword_custom_logic[2]:
+            elif keyword == "{CbsdVersionType}":
                 return self.getVersionType(task)
+
+            elif keyword == "{CbsdTask}":
+                return self.getCurrentSgTask()
 
         # ===========================
 

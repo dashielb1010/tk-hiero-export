@@ -1,69 +1,78 @@
 # Todos
 
-    1. Transfer 'client_shot_name' to shot from tag
+    - Transfer 'client_shot_name' to shot from tag
 
-    2. Get Pipeline Metadata / Client Spec Data
-
-        Shot Entity  - Pending Response from Shotgun Software -
-        a. DstIn (Ref)
-        b. DstOut (Ref)
-        c. SrcIn (Hero Plate)
-        d. SrcOut (Hero Plate)
-        e. Width (Final Client Spec)
-        f. Height (Final Client Spec)
-        g. PixelAspectRatio (Final Client Spec)
+    - Get Pipeline Metadata / Client Spec Data
 
         Version Entity
-       ✔a. Frame Count
-        b. Frame Rate
-        c. Height
-        d. Movie Aspect Ratio
-        e. Path to Frames / Movie
-       ✔f. Task
-        g. Width
-        h. IN-Frame
-        i. OUT-frame
+           ✔- Thumbnail
+           ✔- File Type
+            - Frame Count
+            - Frame Rate
+           ✔- Height
+            - Movie Aspect Ratio
+           ✔- Path to Frames / Movie
+           ✔- Task
+           ✔- Width
+           ✔- IN-Frame
+           ✔- OUT-frame
 
         PublishedFile Entity
-       ✔a. Version Number
-
-    3. Project Presets on a per project basis
-        
-            a. identify point of entry     
-            b. Decide/discover how to store the data in Shotgun/Toolkit
-            c. create a mechanism for resetting the export presets
-            d. Link that to a GUI Button?
             
-    4. Modify GUI Elements
+            ✔- Version Number
 
-    5. Control Exporter Shot Updater based on GUI Elements (Throttle metadata)
+            
+   ✔- Modify GUI Elements
+
+   ✔- Control Exporter Shot Updater based on GUI Elements (Throttle metadata)
+    
+       ✔- DstIn (Ref)
+       ✔- DstOut (Ref)
+       ✔- SrcIn (Hero Plate)
+       ✔- SrcOut (Hero Plate)
+       ✔- Width (Final Client Spec)
+       ✔- Height (Final Client Spec)
+       ✔- PixelAspectRatio (Final Client Spec)
+    
+   ✔- Control the Version Updater based on GUI Elements
+    
+   ✔- Automatic Versioning:
+
+       ✔- Add resolver token (?)
+       ✔- Add GUI Element?
         
-    6. Automatic Versioning:
+    - Create Version Sidecar File (Allow for repairative re-exports via deadline)?
 
-       ✔1. Add resolver token (?)
-        2. Add GUI Element?
-        
-    7. Create Version Sidecar File (Allow for repairative re-exports via deadline)
+   ✔- Call Tag Elements Pre-Export
 
-   ✔8. Call Tag Elements Pre-Export
+    - Warn of Handles at head of clip if shorter than handles?
 
-    9. Warn of Handles at head of clip if shorter than handles
+    - Register Source Media? ( -> Element entity? ) ( -> Source Media Entity? )
 
-    10. Register Source Media ( -> Element entity?)
+    - Export Presets on a per-Shotgun-project basis?
 
 
     REVIEW ENVIRONMENT
 
-    11. Validate Launch HieroPlayer & NukeStudio
+    - Validate Launch HieroPlayer & NukeStudio
 
-   ✔12. Design Workflow for Publishing Hiero Files
+   ✔- Design Workflow for Publishing Hiero Files
 
-   ✔13. tk-multi-workfiles to open review Publishes
+   ✔- tk-multi-workfiles to open review Publishes
 
-    14. Imported Shot Timings based on Version Data
+    - Imported Shot Timings based on Version Data
     
     
     NUKESTUDIO
     
-    15. Test all Tools 
-    16. Configure correct Launch Environment for other artists
+    - Test all Tools 
+    
+    - Configure correct Launch Environment for other artists
+    
+    
+    
+    
+    
+    
+    
+    

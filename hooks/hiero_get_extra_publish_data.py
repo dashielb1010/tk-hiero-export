@@ -10,6 +10,11 @@
 
 from tank import Hook
 
+#  CBSD Customization
+# ==============================
+from hiero.exporters import FnTranscodeExporter
+# ==============================
+
 
 class HieroGetExtraPublishData(Hook):
     """ Get a data dictionary for a PublishedFile to be updated in Shotgun. """
@@ -24,12 +29,17 @@ class HieroGetExtraPublishData(Hook):
 
         #  CBSD Customization
         # ==============================
-        sg_version_number = int(
-            self.parent.execute_hook_method("hook_resolve_custom_strings", "getAutoVersion", task=task)
-        )
+
         published_file_data = {
             'task': self.parent.context.task,
-            'version_number': sg_version_number,
         }
+
+        # Exporting frames or a new movie. Get our version_base_name from Element Tag
+        if isinstance(task, FnTranscodeExporter.TranscodeExporter):
+            sg_version_number = self.parent.execute_hook_method("hook_resolve_custom_strings", "getAutoVersion",
+                                                                task=task)
+            published_file_data['version_number'] = int(sg_version_number) if sg_version_number else 0
+
         return published_file_data
+
         # ==============================
