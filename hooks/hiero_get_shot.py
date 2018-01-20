@@ -26,6 +26,11 @@ class HieroGetShot(Hook):
     # ==============================
     _cbsd_shot_convention_template = 'hiero_shot_convention'
     _cbsd_shot_convention_re = None
+
+    # the following variables are reset by the ``reset__custom_caches`` method
+    _processed_shot_ids = []
+    _processed_items_guids = []
+    _default_delivery_format = None
     # ==============================
 
     def execute(self, task, item, data, **kwargs):
@@ -57,20 +62,11 @@ class HieroGetShot(Hook):
         if len(shots) == 0:
             # create shot in shotgun
 
-            #  CBSD Customization
-            # ==============================
-            scene_code = self.get_scene_code(item.name())
-            scene = self.get_scene(scene_code)
-            # ==============================
 
             shot_data = {
                 "code": item.name(),
                 parent_field: parent,
                 "project": self.parent.context.project,
-                #  CBSD Customization
-                # ==============================
-                'sg_scene': scene,
-                # ==============================
             }
             shot = sg.create("Shot", shot_data, return_fields=fields)
             self.parent.log_info("Created Shot in Shotgun: %s" % shot_data)
@@ -87,6 +83,68 @@ class HieroGetShot(Hook):
                 item=item,
                 task=kwargs.get("task")
             )
+            
+        #  CBSD Customization
+        # ==============================
+        # Add some additional custom metadata to the Shot ( I want to put this in the 'Shot Updater'-- I wish there were
+        # a hook there for it but I think it's best to minimize out-of-hook customizations so placing it here seems
+        # better for the time being.
+
+        # We do some caching-type stuff to keep this from happening more than once per shot or per export item.
+        # Since this method can be called large number of times for a given export item)
+        if shot['id'] not in self.__class__._processed_shot_ids:
+            # make sure we create or get a scene to help sort our shots
+            scene_code = self.get_scene_code(item.name())
+            scene = self.get_scene(scene_code)
+            
+            delivery_format = self.get_default_delivery_format()
+            width = delivery_format['sg_width']
+            height = delivery_format['sg_height']
+            pixel_aspect_ratio = delivery_format['sg_pixel_aspect_ratio']
+            
+            self.parent.shotgun.update("Shot", shot['id'], {'sg_scene': scene,
+                                                            'sg_width': width,
+                                                            'sg_height': height,
+                                                            'sg_pixel_aspect_ratio': pixel_aspect_ratio,
+                                                            })
+            self.__class__._processed_shot_ids.append(shot['id'])
+
+        if item.guid() not in self.__class__._processed_items_guids:
+            is_hero = self.parent.execute_hook_method("hook_resolve_custom_strings",
+                                                      "getElementTagMetadataValue",
+                                                      item=item,
+                                                      metadata_key='tag.is_hero',
+                                                      )
+
+            # Use the timecode from the 'hero' item to set the source timecode information on the Shot.
+            # There could also be a check that the item is element_type == 'Plate', but since only plates are 'hero'
+            # items to our ``TagElements`` tool, it would be redundant.
+            if is_hero == 'True':
+                source_timecode_in_num = item.sourceIn() + item.source().timecodeStart()
+                source_timecode_out_num = item.sourceOut() + item.source().timecodeStart()
+
+                self.parent.shotgun.update("Shot", shot['id'], {'sg_srcin_tc': str(source_timecode_in_num),
+                                                                'sg_srcout_tc': str(source_timecode_out_num),
+                                                                }
+                                           )
+            # 'Reference' or 'Plate' potential types for elements -- for reference transfer the timeline timecodes
+            # to the Shot.
+            element_type = self.parent.execute_hook_method("hook_resolve_custom_strings",
+                                                           "getElementTagMetadataValue",
+                                                           item=item,
+                                                           metadata_key='tag.element_type',
+                                                           )
+            if element_type == 'Reference' and item.guid() not in self.__class__._processed_items_guids:
+                destination_timecode_in_num = item.timelineIn() + item.parentSequence().timecodeStart()
+                destination_timecode_out_num = item.timelineOut() + item.parentSequence().timecodeStart()
+
+                self.parent.shotgun.update("Shot", shot['id'], {'sg_dstin_tc': str(destination_timecode_in_num),
+                                                                'sg_dstout_tc': str(destination_timecode_out_num),
+                                                                }
+                                           )
+            self.__class__._processed_items_guids.append(item.guid())
+
+        # ==============================
 
         return shot
 
@@ -231,5 +289,26 @@ class HieroGetShot(Hook):
             scene_entity = scene_entities[0]
             self.parent.logger.debug("Scene found: %s" % scene_entity)
         return scene_entity
+
+    def get_default_delivery_format(self):
+        """In our studios Pipeline, each Shotgun Project must have a 'Final' and an 'Editorial' Delivery Format Entity.
+        Assume only one exists.
+        """
+        DELIVERY_FORMAT_ENTITY = "CustomEntity06"
+        # query only once until cache reset
+        if not self.__class__._default_delivery_format:
+            self.__class__._default_delivery_format = self.parent.shotgun.find_one(DELIVERY_FORMAT_ENTITY,
+                                                                                [['code', 'is', 'Final']],
+                                                                                ['sg_width', 'sg_height', 'sg_pixel_aspect_ratio']
+                                                                     )
+
+        return self.__class__._default_delivery_format
+
+    def reset_custom_caches(self):
+        """Custom Cache variables are reset. Called in Pre-Export so that all items for a Shot are ensured to be
+        up to date."""
+        self.__class__._processed_shot_ids = []
+        self.__class__._processed_items_guids = []
+        self.__class__._default_delivery_format = None
     # ==============================
 

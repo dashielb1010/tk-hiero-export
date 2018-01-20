@@ -61,6 +61,9 @@ class HieroPreExport(Hook):
         if not self.__class__._SUPPRESS_CLEAR_CACHE:
             self.parent.execute_hook_method("hook_resolve_custom_strings", "cbsd_clear_lookup_cache")
             self.__class__._SUPPRESS_CLEAR_CACHE = True
+
+        # Reset the caches for the get shot hook.
+        self.parent.execute_hook_method("hook_get_shot", "reset_custom_caches")
         # ===========================
 
     #  CBSD Customization
