@@ -18,7 +18,6 @@ from sgtk.platform.qt import QtGui
 
 from hiero.ui.FnUIProperty import UIPropertyFactory
 
-from pprint import pformat
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
@@ -53,6 +52,7 @@ class HieroCustomizeExportUI(HookBaseClass):
 
             processor_ui = ui_object
             properties = processor_ui._preset.properties()
+
             #  CBSD Customization
             # ===========================
             # For our custom ability to throttle the "Shot Updater". Non-hook changes in `sg_shot_processor.py`
