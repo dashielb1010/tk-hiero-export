@@ -35,6 +35,10 @@ from .collating_exporter import CollatingExporter, CollatedShotPreset
 
 import os
 import uuid
+import copy
+
+from hiero.core import VideoTrack
+
 DEADLINE_TEMP_DIR = os.path.normpath('//skynet/data/Tools/SOFTWARE/DeadlineRepository9/temp/hiero_version_yml')
 
 # ==============================
@@ -138,6 +142,22 @@ class ShotgunTranscodeExporter(ShotgunHieroObjectBase, FnTranscodeExporter.Trans
 
         self.shotgunVersionTempFile = os.path.join(DEADLINE_TEMP_DIR, '%s.yml' % str(uuid.uuid4()))
         initDict['ShotgunVersionTempFile'] = self.shotgunVersionTempFile
+
+        #  We want to be able to guarantee that our Hiero Exports to
+        #  Nuke transcode using the same output colorspace as the items' sources
+        #  (This may not guarantee a true 'passthrough' since Nuke will still be
+        #  using the colorspace transformations in its interpretation of the footage,
+        #  or due to other knobs such as FullRange / Video Range interpretation of
+        #  AvidDnX files for example, but we do the best we can for now...)
+        if initDict['preset'].properties().get('colorspacePassthrough'):
+            # We're going to base the output colorspace on the one declared for the input.
+            item = initDict.get('item')
+            if item and isinstance(item.parent(), VideoTrack):
+                colorspace = item.sourceMediaColourTransform()
+                # make the preset unique for this track item
+                initDict['preset'] = copy.deepcopy(initDict['preset'])
+                # modify this case of the preset for export.
+                initDict['preset'].properties()['colourspace'] = colorspace
 
         # ==============================
 

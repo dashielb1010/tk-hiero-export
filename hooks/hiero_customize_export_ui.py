@@ -18,6 +18,10 @@ from sgtk.platform.qt import QtGui
 
 from hiero.ui.FnUIProperty import UIPropertyFactory
 
+#  CBSD Customization
+# ===========================
+from TagElements.constants import PLATE_TYPE, REF_TYPE, ELEMENT_TYPE_NAMES
+# ===========================
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
@@ -49,12 +53,16 @@ class HieroCustomizeExportUI(HookBaseClass):
         """
         # Customize the UI belonging to the Shotgun Shot Processor in `sg_shot_processor.py`
         if ui_object.__class__.__name__ == self._ProcessorUIName:
-
+            """
+            Create the custom UI elements in the Shot Processor interface related to the ShotUpdater and requiring the
+            CBSD Element Tag for exports
+            """
             processor_ui = ui_object
             properties = processor_ui._preset.properties()
 
-            #  CBSD Customization
-            # ===========================
+            custom_widget = QtGui.QWidget()
+            custom_layout = QtGui.QHBoxLayout(custom_widget)
+
             # For our custom ability to throttle the "Shot Updater". Non-hook changes in `sg_shot_processor.py`
             # and `shot_updater.py` related to these presets.
             shot_updater_layout = self._build_shot_updater_widget(processor_ui,
@@ -68,104 +76,139 @@ class HieroCustomizeExportUI(HookBaseClass):
             layout.addWidget(custom_widget)
             custom_layout = QtGui.QHBoxLayout(custom_widget)
 
-            additional_options_widget_01 = QtGui.QWidget()
-            additional_options_layout_01 = QtGui.QFormLayout(additional_options_widget_01)
-            additional_options_layout_01.addRow(QtGui.QLabel(":::: Additional Processor Options ::::"))
+            additional_options_widget = QtGui.QWidget()
+            additional_options_layout = QtGui.QFormLayout(additional_options_widget)
+            additional_options_layout.addRow(QtGui.QLabel("--- Additional CBSD Options ---"))
 
-            custom_property = """Set a new custom property!"""
-            key = "customProperty01"
+            require_cbsd_element_tag = "The CBSD Tag is critical to updating much of the metadata on exports to " \
+                                       "Shotgun, and resolving tokens such as {CbsdAutoVersion} properly. " \
+                                       "Turning this off may produce unexpected behavior-- possibly critical errors."
+            key = "requireCbsdElementTag"
             value = True
-            label = "Custom Property:"
-            processor_ui._custom_property_01 = UIPropertyFactory.create(type(value), key=key, value=value,
-                                                                        dictionary=properties, label=label,
-                                                                        tooltip=custom_property
-                                                                        )
+            label = "Require CBSD Element Tag:"
+            processor_ui._require_cbsd_element_tag = UIPropertyFactory.create(type(value), key=key, value=value,
+                                                                              dictionary=properties, label=label,
+                                                                              tooltip=require_cbsd_element_tag
+                                                                              )
 
-            additional_options_layout_01.addRow(label, processor_ui._custom_property_01)
+            additional_options_layout.addRow(label, processor_ui._require_cbsd_element_tag)
 
-            custom_layout.addWidget(additional_options_widget_01)
+            correct_element_type = "What element type to allow for exports. Abort if non-elements or the wrong " \
+                                   "element type is found among the export selection."
+            key = "correctElementType"
+            value = sorted(list(ELEMENT_TYPE_NAMES.itervalues()))
+            label = "Correct Element Type:"
+            processor_ui._correct_element_type = UIPropertyFactory.create(type(value), key=key,
+                                                                          value=value, dictionary=properties,
+                                                                          label=label, tooltip=correct_element_type
+                                                                          )
+
+            additional_options_layout.addRow(label, processor_ui._correct_element_type)
+
+            custom_layout.addWidget(additional_options_widget)
+
+            layout.addWidget(custom_widget)
 
         # Customize the UI for the "Shotgun Transcode Images" export type in the `version_creator.py` module.
         elif ui_object.__class__.__name__ == self._TranscodeUIName:
+            """
+            Create the custom UI elements related to Colorspace Passthrough on the Transcode Task.
+            """
             transcoder_ui = ui_object
 
             properties = transcoder_ui._preset.properties()
 
-            custom_widget = QtGui.QWidget()
-            layout.addWidget(custom_widget)
-            custom_layout = QtGui.QHBoxLayout(custom_widget)
+            passthrough_widget = QtGui.QWidget()
+            passthrough_layout = QtGui.QFormLayout(passthrough_widget)
 
-            additional_options_widget_01 = QtGui.QWidget()
-            additional_options_layout_01 = QtGui.QFormLayout(additional_options_widget_01)
-            additional_options_layout_01.addRow(QtGui.QLabel(":::: Additional Transcoder Options ::::"))
+            colorspace_passthrough = """Disregard the output colorspace below and set the write node's colorspace knob
+            to the setting declared in the Hiero timeline."""
+            key = "colorspacePassthrough"
+            value = False
+            label = "Colorspace Passthrough:"
+            transcoder_ui._colorspace_passthrough = UIPropertyFactory.create(type(value), key=key, value=value,
+                                                                             dictionary=properties, label=label,
+                                                                             tooltip=colorspace_passthrough
+                                                                             )
 
-            custom_property = """Set a new custom property!"""
-            key = "customProperty01"
+            passthrough_layout.addRow(label, transcoder_ui._colorspace_passthrough)
+
+            abort_if_red_clips = """Colorspace passthrough exports are not possible with RED clips. This option will
+            abort the export if any RED clips are present."""
+            key = "abortIfRedClips"
             value = True
-            label = "Custom Property:"
-            transcoder_ui._custom_property_01 = UIPropertyFactory.create(type(value), key=key, value=value,
-                                                                        dictionary=properties, label=label,
-                                                                        tooltip=custom_property
-                                                                        )
+            label = "Abort if RED clip(s):"
+            transcoder_ui._abort_if_red_clips = UIPropertyFactory.create(type(value), key=key, value=value,
+                                                                             dictionary=properties, label=label,
+                                                                             tooltip=abort_if_red_clips
+                                                                             )
+            passthrough_layout.addRow(label, transcoder_ui._abort_if_red_clips)
 
-            additional_options_layout_01.addRow(label, transcoder_ui._custom_property_01)
-
-            custom_layout.addWidget(additional_options_widget_01)
+            layout.addWidget(passthrough_widget)
 
         # Customize the UI for the "Shotgun Audio Export" in the `sg_audio_export.py` module.
         elif ui_object.__class__.__name__ == self._AudioExportUIName:
-            audio_exporter_ui = ui_object
-
-            properties = audio_exporter_ui._preset.properties()
-
-            custom_widget = QtGui.QWidget()
-            layout.addWidget(custom_widget)
-            custom_layout = QtGui.QHBoxLayout(custom_widget)
-
-            additional_options_widget_01 = QtGui.QWidget()
-            additional_options_layout_01 = QtGui.QFormLayout(additional_options_widget_01)
-            additional_options_layout_01.addRow(QtGui.QLabel(":::: Additional Audio Export Options ::::"))
-
-            custom_property = """Set a new custom property!"""
-            key = "customProperty01"
-            value = True
-            label = "Custom Property:"
-            audio_exporter_ui._custom_property_01 = UIPropertyFactory.create(type(value), key=key, value=value,
-                                                                         dictionary=properties, label=label,
-                                                                         tooltip=custom_property
-                                                                         )
-
-            additional_options_layout_01.addRow(label, audio_exporter_ui._custom_property_01)
-
-            custom_layout.addWidget(additional_options_widget_01)
+            """
+            The following code is a template for adding custom options to the Audio Exporter interface, but is not
+            currently being used.
+            """
+            # audio_exporter_ui = ui_object
+            #
+            # properties = audio_exporter_ui._preset.properties()
+            #
+            # custom_widget = QtGui.QWidget()
+            # layout.addWidget(custom_widget)
+            # custom_layout = QtGui.QHBoxLayout(custom_widget)
+            #
+            # additional_options_widget_01 = QtGui.QWidget()
+            # additional_options_layout_01 = QtGui.QFormLayout(additional_options_widget_01)
+            # additional_options_layout_01.addRow(QtGui.QLabel(":::: Additional Audio Export Options ::::"))
+            #
+            # custom_property = """Set a new custom property!"""
+            # key = "customProperty01"
+            # value = True
+            # label = "Custom Property:"
+            # audio_exporter_ui._custom_property_01 = UIPropertyFactory.create(type(value), key=key, value=value,
+            #                                                              dictionary=properties, label=label,
+            #                                                              tooltip=custom_property
+            #                                                              )
+            #
+            # additional_options_layout_01.addRow(label, audio_exporter_ui._custom_property_01)
+            #
+            # custom_layout.addWidget(additional_options_widget_01)
+            pass
 
         # Customize the UI for the "Shotgun Nuke Shot Export" in the `sg_nuke_shot_export.py` module.
         elif ui_object.__class__.__name__ == self._NukeShotExportUIName:
-
-            nuke_exporter_ui = ui_object
-
-            properties = nuke_exporter_ui._preset.properties()
-
-            custom_widget = QtGui.QWidget()
-            layout.addWidget(custom_widget)
-            custom_layout = QtGui.QHBoxLayout(custom_widget)
-
-            additional_options_widget_01 = QtGui.QWidget()
-            additional_options_layout_01 = QtGui.QFormLayout(additional_options_widget_01)
-            additional_options_layout_01.addRow(QtGui.QLabel(":::: Additional Nuke Shot Export Options ::::"))
-
-            custom_property = """Set a new custom property!"""
-            key = "customProperty01"
-            value = True
-            label = "Custom Property:"
-            nuke_exporter_ui._custom_property_01 = UIPropertyFactory.create(type(value), key=key, value=value,
-                                                                             dictionary=properties, label=label,
-                                                                             tooltip=custom_property
-                                                                             )
-
-            additional_options_layout_01.addRow(label, nuke_exporter_ui._custom_property_01)
-
-            custom_layout.addWidget(additional_options_widget_01)
+            """
+            The following code is a template for adding custom options to the Nuke *Project* Export interface, but is
+            not currently being used.
+            """
+            # nuke_exporter_ui = ui_object
+            #
+            # properties = nuke_exporter_ui._preset.properties()
+            #
+            # custom_widget = QtGui.QWidget()
+            # layout.addWidget(custom_widget)
+            # custom_layout = QtGui.QHBoxLayout(custom_widget)
+            #
+            # additional_options_widget_01 = QtGui.QWidget()
+            # additional_options_layout_01 = QtGui.QFormLayout(additional_options_widget_01)
+            # additional_options_layout_01.addRow(QtGui.QLabel(":::: Additional Nuke Shot Export Options ::::"))
+            #
+            # custom_property = """Set a new custom property!"""
+            # key = "customProperty01"
+            # value = True
+            # label = "Custom Property:"
+            # nuke_exporter_ui._custom_property_01 = UIPropertyFactory.create(type(value), key=key, value=value,
+            #                                                                  dictionary=properties, label=label,
+            #                                                                  tooltip=custom_property
+            #                                                                  )
+            #
+            # additional_options_layout_01.addRow(label, nuke_exporter_ui._custom_property_01)
+            #
+            # custom_layout.addWidget(additional_options_widget_01)
+            pass
 
     def initialize_properties(self, preset, **kwargs):
         """
@@ -191,30 +234,31 @@ class HieroCustomizeExportUI(HookBaseClass):
             properties["updateSgWorkingDuration"] = True
             properties["tkCreateFilesystemStructure"] = True
             properties["sgCreateCut"] = True
+            properties["requireCbsdElementTag"] = True
+            properties["correctElementType"] = ELEMENT_TYPE_NAMES[PLATE_TYPE]
             # ===========================
-
-            properties["customProperty01"] = True
 
             return properties
 
         elif preset.__class__.__name__ == self._TranscodePresetName:
             properties = preset.properties()
 
-            properties["customProperty01"] = True
+            properties["colorspacePassthrough"] = False
+            properties["abortIfRedClips"] = True
 
             return properties
 
         elif preset.__class__.__name__ == self._AudioExportPresetName:
             properties = preset.properties()
 
-            properties["customProperty01"] = True
+            # properties["customProperty01"] = True
 
             return properties
 
         elif preset.__class__.__name__ == self._NukeShotExportPresetName:
             properties = preset.properties()
 
-            properties["customProperty01"] = True
+            # properties["customProperty01"] = True
 
             return properties
 

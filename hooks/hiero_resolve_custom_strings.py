@@ -124,8 +124,24 @@ class HieroResolveCustomStrings(Hook):
         return version_type
 
     def getCurrentSgTask(self):
-        # todo return 'conf' or 'rev' or whatever
-        print 'Wahhooooo'
+        context = self.parent.context
+        task = context.task
+        if not task:
+            return 'no_task'
+        if 'sg_task' not in self._sg_lookup_cache:
+            task = self.parent.shotgun.find_one("Task", [['id', 'is', task['id']]], ['sg_short_name'])
+            self._sg_lookup_cache['sg_task'] = task
+        return self._sg_lookup_cache['sg_task']['sg_short_name']
+
+    def getCurrentSgStep(self):
+        context = self.parent.context
+        step = context.step
+        if not step:
+            return 'no_step'
+        if 'sg_step' not in self._sg_lookup_cache:
+            step = self.parent.shotgun.find_one("Step", [['id', 'is', step['id']]], ['short_name'])
+            self._sg_lookup_cache['sg_step'] = step
+        return self._sg_lookup_cache['sg_step']['short_name']
 
     # ===========================
 
@@ -153,6 +169,7 @@ class HieroResolveCustomStrings(Hook):
             "{CbsdVersionBaseName}",
             "{CbsdVersionType}",
             "{CbsdTask}",
+            "{CbsdStep}",
         )
 
         if keyword in keyword_custom_logic:
@@ -167,6 +184,9 @@ class HieroResolveCustomStrings(Hook):
 
             elif keyword == "{CbsdTask}":
                 return self.getCurrentSgTask()
+
+            elif keyword == "{CbsdStep}":
+                return self.getCurrentSgStep()
 
         # ===========================
 

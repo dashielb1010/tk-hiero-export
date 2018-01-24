@@ -1,8 +1,11 @@
-# Todos
+Todos
+
+"✔" Denotes Complete
+"X" Denotes On Hold
 
     - Transfer 'client_shot_name' to shot from tag
 
-    - Get Pipeline Metadata / Client Spec Data
+   ✔- Get Pipeline Metadata / Client Spec Data
 
         Version Entity
            ✔- Thumbnail
@@ -19,7 +22,7 @@
 
         PublishedFile Entity
             
-            ✔- Version Number
+           ✔- Version Number
 
             
    ✔- Modify GUI Elements
@@ -41,15 +44,15 @@
        ✔- Add resolver token (?)
        ✔- Add GUI Element?
         
-    - Create Version Sidecar File (Allow for repairative re-exports via deadline)?
+   X- Create Version Sidecar File (Allow for repairative re-exports w/upload to SG via deadline)?
 
    ✔- Call Tag Elements Pre-Export
 
-    - Warn of Handles at head of clip if shorter than handles?
+   X- Warn of Handles at head of clip if shorter than handles?
 
-    - Register Source Media? ( -> Element entity? ) ( -> Source Media Entity? )
+   X- Register Source Media? ( -> Element entity? ) ( -> Source Media Entity? )
 
-    - Export Presets on a per-Shotgun-project basis?
+   X- Export Presets on a per-Shotgun-project basis?
 
 
     REVIEW ENVIRONMENT

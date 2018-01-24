@@ -153,8 +153,8 @@ class HieroGetShot(Hook):
         Given a Hiero sequence and data cache, return the corresponding entity
         in Shotgun to serve as the parent for contained Shots.
 
-        :param hiero_sequence: A Hiero sequence object
-        :param data: A dictionary with cached parent data.
+        @param hiero_sequence: A Hiero sequence object
+        @param data: A dictionary with cached parent data.
 
         The data dict is typically the app's `preprocess_data` which maintains
         the cache across invocations of this hook.
@@ -252,7 +252,7 @@ class HieroGetShot(Hook):
                 self.__class__._cbsd_shot_convention_re = re.compile(convention_pattern)
             except:
                 self.parent.logger.error("CBSD ERROR: The '%s' template definition is not a valid re pattern."
-                                  % self._cbsd_shot_convention_template)
+                                         % self._cbsd_shot_convention_template)
                 raise
 
         else:
