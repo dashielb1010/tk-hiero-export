@@ -155,6 +155,7 @@ class ShotgunTranscodeExporter(ShotgunHieroObjectBase, FnTranscodeExporter.Trans
             if item and isinstance(item.parent(), VideoTrack):
                 colorspace = item.sourceMediaColourTransform()
                 # make the preset unique for this track item
+                # CONCERN: This operation may have unforeseen consequences... But I'm not sure if we're in any danger.
                 initDict['preset'] = copy.deepcopy(initDict['preset'])
                 # modify this case of the preset for export.
                 initDict['preset'].properties()['colourspace'] = colorspace
@@ -454,6 +455,8 @@ class ShotgunTranscodeExporter(ShotgunHieroObjectBase, FnTranscodeExporter.Trans
                 version_data=vers,
                 #  CBSD Customization
                 # ==============================
+                #  We need the task entity specifically so we can access the item
+                #  to populate some metadata about colorspace, format, frameranges etc.
                 task=self,
                 # ==============================
             )

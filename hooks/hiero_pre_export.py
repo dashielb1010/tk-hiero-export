@@ -72,7 +72,9 @@ class HieroPreExport(Hook):
         def processTaskPreQueuePatch(*args, **kwargs):
             """
             Patch for the ShotgunShotProcessor.processTaskPreQueue method
-            used to abort exports if certain requirements are not met.
+            used to abort exports if certain requirements are not met. This is
+            a nifty way of making sure we do our own validation before the export happens.
+            # Todo Find out why this Doesnt seem to have an effect on Linux??
             """
             # If required, make sure the Element Tag is present.
             if processor._preset.properties().get('requireCbsdElementTag'):

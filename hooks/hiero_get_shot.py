@@ -24,6 +24,7 @@ class HieroGetShot(Hook):
 
     #  CBSD Customization
     # ==============================
+    # We have a regex shot convention in our toolkit configs templates
     _cbsd_shot_convention_template = 'hiero_shot_convention'
     _cbsd_shot_convention_re = None
 
@@ -88,7 +89,7 @@ class HieroGetShot(Hook):
         # ==============================
         # Add some additional custom metadata to the Shot ( I want to put this in the 'Shot Updater'-- I wish there were
         # a hook there for it but I think it's best to minimize out-of-hook customizations so placing it here seems
-        # better for the time being.
+        # better for the time being. )
 
         # We do some caching-type stuff to keep this from happening more than once per shot or per export item.
         # Since this method can be called large number of times for a given export item)
@@ -298,9 +299,11 @@ class HieroGetShot(Hook):
         # query only once until cache reset
         if not self.__class__._default_delivery_format:
             self.__class__._default_delivery_format = self.parent.shotgun.find_one(DELIVERY_FORMAT_ENTITY,
-                                                                                [['code', 'is', 'Final']],
-                                                                                ['sg_width', 'sg_height', 'sg_pixel_aspect_ratio']
-                                                                     )
+                                                                                   [['code', 'is', 'Final']],
+                                                                                   ['sg_width',
+                                                                                    'sg_height',
+                                                                                    'sg_pixel_aspect_ratio']
+                                                                                   )
 
         return self.__class__._default_delivery_format
 

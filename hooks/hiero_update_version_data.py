@@ -55,7 +55,6 @@ class HieroUpdateVersionData(Hook):
                 del version_data['sg_path_to_frames']
 
         colorspace = properties.get("colourspace", '')
-        # todo Account for Passthrough - or Default
 
         # Determine Frame Ranges
         handles = task._cutHandles if task._cutHandles is not None else 0
@@ -98,7 +97,7 @@ class HieroUpdateVersionData(Hook):
         elif task._preset.properties()['reformat']['to_type'] == 'scale':
             # Note that these values very likely will not be accurate if the result of the multiplication is a
             # non-integer value. If accuracy in that case is required, Nuke's reformatting behavior should be explored
-            # to determine how it handles rounding of pixel dimesions when 'scaling' so that logic can be reflected
+            # to determine how it handles rounding of pixel dimensions when 'scaling' so that logic can be reflected
             # here, --or-- determining and populating such values should take place once the actual resulting
             # images are available and their resolution can be read instead of guessed-at.
             width = int(task._item.source().format().width() * task._preset.properties()['reformat']['scale'])
@@ -115,11 +114,7 @@ class HieroUpdateVersionData(Hook):
                                        % (task._preset.properties()['reformat']['to_type'],
                                           pformat(task._preset.properties()))
                                        )
-
-
-
-
-        version_data.update({
+        updated_data = {
             'code': file_name,
             'sg_version_number': sg_version_number,
             'sg_version_type': sg_version_type,
@@ -130,6 +125,11 @@ class HieroUpdateVersionData(Hook):
             'sg_height': height,
             'sg_first_frame': first_frame,
             'sg_last_frame': last_frame,
-        })
+            'frame_range': '-'.join([str(task._item.sourceIn()), str(task._item.sourceIn())]),
+            'frame_count': int(task._item.sourceDuration()),
+            # 'frame_rate':   # Todo determine frame rate ?
+        }
+        self.parent.logger.debug("Updated data: \n%s" % pformat(sorted(updated_data)))
+        version_data.update(updated_data)
 
         # ===========================
