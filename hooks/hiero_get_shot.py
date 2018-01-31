@@ -256,17 +256,16 @@ class HieroGetShot(Hook):
                                          % self._cbsd_shot_convention_template)
                 raise
 
-        else:
-            scene_code = ''
-            match = self.__class__._cbsd_shot_convention_re.match(shot_code)
+        scene_code = ''
+        match = self.__class__._cbsd_shot_convention_re.match(shot_code)
 
-            if not match:
-                self.parent.logger.warning(
-                    "The Shot code, '%s' was not matched to the resolved shot convention: %s"
-                    % (shot_code, self.__class__._cbsd_shot_convention_re.pattern))
-            else:
-                scene_code = match.groupdict().get('scene')
-            return scene_code
+        if not match:
+            self.parent.logger.warning(
+                "The Shot code, '%s' was not matched to the resolved shot convention: %s"
+                % (shot_code, self.__class__._cbsd_shot_convention_re.pattern))
+        else:
+            scene_code = match.groupdict().get('scene', '')
+        return scene_code
 
     def get_scene(self, scene_code):
         """

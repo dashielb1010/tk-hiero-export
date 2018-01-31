@@ -78,7 +78,7 @@ class HieroPostVersionCreation(HookBaseClass):
         @param task - \b version_creator.ShotgunTranscodeExporter - The
         Shotgun Transcode Exporter Task for the exported item
         """
-        if not task or task.shotgunVersionTempFile:
+        if not task or not task.shotgunVersionTempFile:
             self.parent.logger.warning("No Deadline Tempfile Attribute found on the task: %s" % str(task))
             return
         temp_file_path = task.shotgunVersionTempFile

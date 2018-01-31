@@ -441,11 +441,15 @@ class ShotgunTranscodeExporter(ShotgunHieroObjectBase, FnTranscodeExporter.Trans
             self.app.log_debug("Creating Shotgun Version %s" % str(self._version_data))
             vers = self.app.shotgun.create("Version", self._version_data)
 
-            if os.path.exists(self._quicktime_path):
-                self.app.log_debug("Uploading quicktime to Shotgun... (%s)" % self._quicktime_path)
-                self.app.shotgun.upload("Version", vers["id"], self._quicktime_path, "sg_uploaded_movie")
-                if self._temp_quicktime:
-                    shutil.rmtree(os.path.dirname(self._quicktime_path))
+            #  CBSD Customization
+            # ==============================
+            # Suppress normal uploading of QTs (Deadline handles this)
+            # if os.path.exists(self._quicktime_path):
+            #     self.app.log_debug("Uploading quicktime to Shotgun... (%s)" % self._quicktime_path)
+            #     self.app.shotgun.upload("Version", vers["id"], self._quicktime_path, "sg_uploaded_movie")
+            #     if self._temp_quicktime:
+            #         shutil.rmtree(os.path.dirname(self._quicktime_path))
+            # ==============================
 
         # Post creation hook
         ####################
