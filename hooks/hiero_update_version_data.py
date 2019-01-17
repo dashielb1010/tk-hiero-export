@@ -11,11 +11,13 @@
 #  CBSD Customization
 # ===========================
 import os
+import re
 from pprint import pprint, pformat
 # ===========================
 
 from tank import Hook
 
+re_unc = re.compile("^\/\/")
 
 class HieroUpdateVersionData(Hook):
     """ Update the data dictionary for a Version to be created in Shotgun. """
@@ -42,17 +44,34 @@ class HieroUpdateVersionData(Hook):
         nuke_sequence_file_types = ['avi', 'cin', 'dpx', 'exr', 'jpeg', 'pic', 'png', 'sgi', 'targa', 'tiff']
         nuke_movie_file_types = ['mov', ]
 
+        # attempt to convert the path to UNC for cross platform RV compatibility
+        path_forward_slash = task._resolved_export_path.replace("\\", "/")
+        path_to_export = path_forward_slash
+        if not re_unc.match(path_forward_slash):
+            try:
+                path_forward_slash = "/" + path_forward_slash
+                assert re_unc.match(path_forward_slash)
+                path_to_export = path_forward_slash
+            except AssertionError:
+                self.parent.logger.warning("Resolved export path '%s' could not be converted to UNC!"
+                                           % task._resolved_export_path)
+
         # -- Export is a sequence
         if file_type in nuke_sequence_file_types:
-            version_data['sg_path_to_frames'] = task._resolved_export_path
+            version_data['sg_path_to_frames'] = path_to_export
             if 'sg_path_to_movie' in version_data:
                 del version_data['sg_path_to_movie']
 
         # -- Export is a movie
         elif file_type in nuke_movie_file_types:
-            version_data['sg_path_to_movie'] = task._resolved_export_path
+            version_data['sg_path_to_movie'] = path_to_export
             if 'sg_path_to_frames' in version_data:
                 del version_data['sg_path_to_frames']
+        else:
+            self.parent.logger.warning("Unhandled file type: '%s'. Neither 'sg_path_to_frames' nor 'sg_path_to_movie' "
+                                       "will be updated." % file_type)
+            del version_data['sg_path_to_frames']
+            del version_data['sg_path_to_movie']
 
         colorspace = properties.get("colourspace", '')
 
@@ -60,6 +79,7 @@ class HieroUpdateVersionData(Hook):
         handles = task._cutHandles if task._cutHandles is not None else 0
         startFrame = task._startFrame or 0
 
+        # todo Omit this logic and instead set the frame numbers of the actual export to reflect the cut offset.
         cut_in_offset = self.parent.execute_hook_method("hook_resolve_custom_strings",
                                                         "getElementTagMetadataValue",
                                                         item=task._item,
@@ -78,7 +98,7 @@ class HieroUpdateVersionData(Hook):
 
         # Rework the Version's code field. Get rid of the capitalization that happens by default-- unnecessary.
         file_name = os.path.basename(task._resolved_export_path)
-        file_name = os.path.splitext(file_name)[0]
+        file_name = file_name.split(".")[0]
 
         # Get the Version Number
         sg_version_number = int(
@@ -119,6 +139,7 @@ class HieroUpdateVersionData(Hook):
             'sg_version_number': sg_version_number,
             'sg_version_type': sg_version_type,
             'sg_file_type': file_type,
+            # todo Use Color Transform custom entity in CBSD Shotgun
             'sg_colorspace': colorspace,
             'sg_task': self.parent.context.task,
             'sg_width': width,
